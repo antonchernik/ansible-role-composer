@@ -1,0 +1,33 @@
+- name: Composer ROLE | Check if php is installed
+  shell: command -v php >/dev/null 2>&1
+  register: is_php_installed
+  ignore_errors: yes
+
+
+- debug: var=is_php_installed
+
+- name: Composer ROLE | Check if composer is installed
+  shell: command -v composer >/dev/null 2>&1
+  register: is_composer_installed
+  ignore_errors: yes
+
+
+- name: Composer ROLE | Download composer-setup.php
+  command: "chdir=/tmp php -r \"copy('https://getcomposer.org/installer', 'composer-setup.php');\""
+  become: true
+  when: is_composer_installed.rc != 0 and is_php_installed.rc == 0
+
+- name: Composer ROLE | Download composer.phar
+  command: "chdir=/tmp php composer-setup.php"
+  become: true
+  when: is_composer_installed.rc != 0 and is_php_installed.rc == 0
+
+- name: Composer ROLE | Move composer.phar to /usr/local/bin/composer
+  command: "chdir=/tmp mv composer.phar /usr/local/bin/composer"
+  become: true
+  when: is_composer_installed.rc != 0 and is_php_installed.rc == 0
+
+- file:
+    path: /usr/local/bin/composer
+    mode: 0755
+  when: is_composer_installed.rc != 0 and is_php_installed.rc == 0
